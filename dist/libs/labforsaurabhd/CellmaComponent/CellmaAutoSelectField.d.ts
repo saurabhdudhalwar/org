@@ -1,0 +1,30 @@
+import { FocusEventHandler, HTMLAttributes, ReactNode, SyntheticEvent } from "react";
+import { AutocompleteChangeDetails, AutocompleteChangeReason, AutocompleteRenderOptionState } from "@mui/material";
+interface Props {
+    multiple?: any;
+    value?: any;
+    limitTags?: any;
+    label?: string | undefined;
+    options: readonly any[];
+    getOptionLabel?: ((option: any) => string) | undefined;
+    onChange?: ((event: SyntheticEvent<Element, Event>, value: any, reason: AutocompleteChangeReason, details?: AutocompleteChangeDetails<any> | undefined) => void) | undefined;
+    onBlur?: FocusEventHandler<HTMLDivElement> | undefined;
+    renderOption?: ((props: HTMLAttributes<HTMLLIElement>, option: any, state: AutocompleteRenderOptionState) => ReactNode) | undefined;
+    onInputBlur?: any;
+    clearable?: any;
+    name?: string | undefined;
+    required?: boolean | undefined;
+    ariaLabel?: string;
+    dummyData?: any;
+    disabled?: any;
+    onInputChange?: any;
+    error?: any;
+    isOptionEqualToValue?: any;
+    inputValue?: any;
+    freeSolo?: any;
+    autoComplete?: any;
+    inputTextValue?: any;
+    clearOnBlur?: any;
+}
+export declare const CellmaAutoSelectField: React.FC<Props>;
+export default CellmaAutoSelectField;
