@@ -1,0 +1,1 @@
+Add all your referral related config files in this folder.

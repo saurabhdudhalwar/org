@@ -1,0 +1,10 @@
+{
+  "ourPendingOnReferral": "Pending Service On Referrals",
+  "referredTo": "Referred To",
+  "clinicLocation": "Clinic Location",
+  "referralDate": "Referral Date",
+  "patientName": "Patient Name",
+  "referredFrom": "Referred From",
+  "notes": "Notes",
+  "noDataFound": "No Data Found"
+}

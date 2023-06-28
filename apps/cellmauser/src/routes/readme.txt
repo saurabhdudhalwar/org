@@ -1,0 +1,1 @@
+Add all your global routes files in this folder.

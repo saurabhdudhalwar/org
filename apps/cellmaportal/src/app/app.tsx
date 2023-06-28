@@ -1,11 +1,12 @@
 import NxWelcome from './nx-welcome';
+import { CellmaButton } from "@org/libs"
+
 
 export function App() {
   return (
     <div>
-      <style jsx>{`
-        /** your style here **/
-      `}</style>
+      Hello
+      <CellmaButton label="Hello" />
     </div>
   );
 }

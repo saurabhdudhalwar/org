@@ -14,7 +14,12 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@org/labforsaurabhd": ["libs/labforsaurabhd/src/index.ts"],
+      "@org/libs": ["libs/my-lib/src/index.ts"],
+      "@org/my-lab": ["libs/my-lab/src/index.ts"],
+      "@org/thefinallabbysaurabh": ["libs/thefinallabbysaurabh/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

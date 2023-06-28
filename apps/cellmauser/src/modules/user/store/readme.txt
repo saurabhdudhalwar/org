@@ -1,0 +1,1 @@
+Add all your user module related store files in this folder.

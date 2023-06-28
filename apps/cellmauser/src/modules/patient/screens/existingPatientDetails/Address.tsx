@@ -1,0 +1,170 @@
+import { Typography } from "@mui/material";
+import Grid from "@mui/material/Grid";
+import { useSelector } from "react-redux";
+
+import { GridItem } from "./ExistingPatientDetails";
+import CellmaDistrictSearch from "../../../../common/CellmaDistrictSearch";
+import CellmaPostCodeSearch from "../../../../common/CellmaPostCodeSearch";
+import * as Common from "../../../../common/CommonComponentsIndex";
+import { isError } from "../../../../utils/GeneralUtils";
+import {
+  allowDigitCharacterSpace,
+  restrictCutCopyPaste,
+  restrictSpaceAtStart,
+} from "../../../../utils/Validations";
+import translate from "../../assets/translationFiles/existingPatientDetailsTranslation";
+
+const Address = (props: any) => {
+  const { language } = useSelector((state: any) => state.language);
+  const { estPatientPostcodeMandatory } = useSelector(
+    (state: any) => state.auth
+  );
+
+  return (
+    <Grid container spacing={3} paddingY="20px">
+      <Grid container item xs={12} spacing={3}>
+        <Grid container item xs={12}>
+          <Grid item xs={12} sm={3}>
+            <CellmaPostCodeSearch
+              data={props?.data}
+              setIsSaveButtonDisabled={props.handleSaveButton}
+              type="postcodeSearch"
+            />
+          </Grid>
+          {props?.estUseAddressLookup === 1 && (
+            <>
+              <Grid item xs={12} sm={0.5}>
+                <Typography
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    mt: "10px",
+                  }}
+                >
+                  OR
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} sm={3}>
+                <CellmaDistrictSearch
+                  data={props?.data}
+                  setIsSaveButtonDisabled={props.handleSaveButton}
+                />
+              </Grid>
+            </>
+          )}
+        </Grid>
+
+        <GridItem>
+          <Common.CellmaInputField
+            label={translate("companyName", language)}
+            name="addCompanyName"
+            ariaLabel="companyNameAddress"
+            maxLength="255"
+            value={props?.data?.values?.addCompanyName ?? ""}
+            onHandleChange={(event: any) => {
+              props?.data.handleChange("addCompanyName")(event);
+              props.handleSaveButton(!event.target.value && event.target.value);
+            }}
+          />
+        </GridItem>
+        <GridItem>
+          <Common.CellmaInputField
+            required
+            label={translate("numberAndRoad", language)}
+            name="addAddress1"
+            ariaLabel="numberAndRoadAddress"
+            maxLength="255"
+            value={props?.data?.values?.addAddress1 ?? ""}
+            onBlur={props?.data?.handleBlur}
+            onKeyPress={restrictSpaceAtStart}
+            onHandleChange={(event: any) => {
+              props.handleSaveButton(!event.target.value && event.target.value);
+              props?.data?.setFieldValue("addAddress1", event.target.value);
+            }}
+            errorText={isError(props?.data, "addAddress1")}
+          />
+        </GridItem>
+
+        <GridItem>
+          <Common.CellmaInputField
+            disabled
+            label={translate("district", language)}
+            name="district"
+            ariaLabel="districtAddress"
+            maxLength="255"
+            value={props?.data?.values?.district ?? ""}
+            onHandleChange={props?.data?.handleChange}
+          />
+        </GridItem>
+        <GridItem>
+          <Common.CellmaInputField
+            disabled
+            label={translate("town", language)}
+            name="town"
+            ariaLabel="townAddress"
+            maxLength="255"
+            value={props?.data?.values?.town ?? ""}
+            onHandleChange={props?.data?.handleChange}
+          />
+        </GridItem>
+        <GridItem>
+          <Common.CellmaInputField
+            disabled
+            label={translate("county", language)}
+            name="county"
+            ariaLabel="countyAddress"
+            value={props?.data?.values?.county ?? ""}
+            onHandleChange={props?.data?.handleChange}
+          />
+        </GridItem>
+        <GridItem>
+          <Common.CellmaInputField
+            label={translate("postCode", language)}
+            name="postcode"
+            ariaLabel="postCodeAddress"
+            value={props?.data?.values?.postcode ?? ""}
+            style={{ textTransform: "uppercase" }}
+            onKeyPress={allowDigitCharacterSpace}
+            onPaste={restrictCutCopyPaste}
+            maxLength="20"
+            required={estPatientPostcodeMandatory === 1}
+            onHandleChange={(event: any) => {
+              props.handleSaveButton(!event.target.value && event.target.value);
+              props?.data?.setFieldValue("postcode", event.target.value);
+            }}
+            onBlur={props?.data?.handleBlur}
+            errorText={isError(props?.data, "postcode")}
+          />
+        </GridItem>
+
+        <GridItem>
+          <Common.CellmaInputField
+            required
+            disabled
+            label={translate("country", language)}
+            name="country"
+            ariaLabel="countryAddress"
+            value={props?.data?.values?.country ?? ""}
+            onHandleChange={props?.data?.handleChange}
+            onBlur={props?.data?.handleBlur}
+            errorText={isError(props?.data, "country")}
+          />
+        </GridItem>
+        <GridItem>
+          <Common.CellmaInputField
+            disabled
+            label={translate("healthRegion", language)}
+            name="addHealthRegionEliId"
+            ariaLabel="healthRegionEliIdAddress"
+            maxLength="255"
+            value={props?.data?.values?.addHealthRegionEliId ?? ""}
+            onHandleChange={props?.data?.handleChange}
+          />
+        </GridItem>
+      </Grid>
+    </Grid>
+  );
+};
+
+export default Address;

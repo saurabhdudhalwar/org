@@ -1,0 +1,17 @@
+{
+  "menuDropDownFindPatient": "Find Patient",
+  "menuDropDownPatientSummary": "Patient Summary",
+  "menuDropDownAddReferral": "Add Referral",
+  "menuDropDownMyDetails": "My Details",
+  "menuDropDownMyTask": "My Tasks",
+  "menuDropDownMyAlerts": "My Alerts",
+  "menuDropDownMyTemplates": "My Templates",
+  "menuDropDownMyPhysicalSigns": "My Physical Signs",
+  "menuDropDownMyAppointments": "My Appointments",
+  "menuDropDownWorklists": "Worklists",
+  "menuDropDownCellmaUserVersion": "Cellma User Version",
+  "menuDropDownCellmaReactVersion": "Front End Version:",
+  "menuDropDownCellmaApiVersion": "Back End Version:",
+  "menuDropDownCellmaDatabaseVersion": "Database Version:",
+  "menuDropDownLogout": "Logout"
+}

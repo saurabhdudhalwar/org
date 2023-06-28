@@ -1,0 +1,16 @@
+{
+    "c4eve1":"patientSearch",
+    "c4eve2":"serviceBookAppointment",
+    "c4eve3":"scheduledPatientAppointments",
+    "c4eve4":"serviceAppointments",
+    "c4eve5":"serviceHPAppointments",
+    "c4eve6":"addAndEditPatientAppointment",
+    "c4eve7":"cancelledPatientAppointments",
+    "c4eve8":"waitedNotSeenPatientAppointments",
+    "c4eve9":"attendedPatientAppointments",
+    "c4eve10":"didNotAttendedPatientAppointments",
+    "c4eve11":"serviceAppointmentsReminder",
+    "c4eve12":"provisionalAppointment",
+    "c4eve13":"roomBooking",
+    "c4eve14":"roomDiary"
+}

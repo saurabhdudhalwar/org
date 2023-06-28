@@ -1,0 +1,1 @@
+Add all your authentication related store files in this folder.

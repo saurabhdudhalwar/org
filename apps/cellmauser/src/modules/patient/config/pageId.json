@@ -1,0 +1,19 @@
+{
+  "c4pat1": "patientSearch",
+  "c4pat2": "patientDuplicateCheck",
+  "c4pat3": "addPatient",
+  "c4pat4": "addDetails",
+  "c4pat5": "addAddress",
+  "c4pat6": "addPIP",
+  "c4pat7": "addGP",
+  "c4pat8": "printIDCard",
+  "c4pat9": "editPatient",
+  "c4pat10": "demographics",
+  "c4pat11": "contactTypeScreen",
+  "c4pat12": "singlePageRegistration",
+  "c4pat13": "deathPatient",
+  "c4pat14": "patientSearchCustom",
+  "c4pat15": "addPatientPipCustom",
+  "c4pat16": "confirmPatientDetails",
+  "c4pat17": "addDetailsCustom"
+}

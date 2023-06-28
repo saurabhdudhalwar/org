@@ -1,0 +1,24 @@
+export const LINKS_MENU_ITEMS = [
+  {
+    name: "letters",
+    src: "Letters",
+    roles: ["rejectedServiceOnReferrals"],
+  },
+  {
+    name: "pendingReferral",
+    src: "PendingReferral",
+<<<<<<< HEAD
+    roles: ["serviceReferrals"]
+  },
+  {
+    name: "createOnReferral",
+    src: "CreateOnReferral",
+    roles:["serviceReferrals"],
+  }
+=======
+    roles: ["serviceReferrals"],
+  },
+>>>>>>> 417291191175b6c5edf9af14b8af1ee3c7ae7aec
+];
+
+export const TEST = [];

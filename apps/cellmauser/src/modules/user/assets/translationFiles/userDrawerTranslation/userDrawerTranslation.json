@@ -1,0 +1,29 @@
+{
+  "English": {
+    "userManagement":"User Management",
+    "searchUser":"Search User",
+    "userGroups":"User Groups",
+    "userGroupGrouping":"User Groups Groupings",
+    "serviceGroups":"Service Groups",
+    "userMonitoring":"User Monitoring",
+    "trainingPortalUser":"Training Portal User",
+    "hpNonHpService":"HP/Non HP Services",
+    "healthcareProfessions":"Healthcare Professions",
+    "setup":"Set-up",
+    "list":"List"
+    
+  },
+  "Marathi": {
+    "userManagement":"वापरकर्ता व्यवस्थापन",
+    "searchUser":"वापरकर्ता शोधा",
+    "userGroups":"वापरकर्ता गट",
+    "userGroupGrouping":"वापरकर्ता गट गट",
+    "serviceGroups":"सेवा गट",
+    "userMonitoring":"वापरकर्ता देखरेख",
+    "trainingPortalUser":"प्रशिक्षण पोर्टल वापरकर्ता",
+    "hpNonHpService":"एचपी/नॉन एचपी सेवा",
+    "healthcareProfessions":"आरोग्यसेवा व्यवसाय",
+    "setup":"सेट-अप",
+    "list":"यादी"
+  }
+}

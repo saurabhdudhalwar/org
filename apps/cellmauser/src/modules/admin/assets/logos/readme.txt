@@ -1,0 +1,1 @@
+Add all your authentication related logos files in this folder.

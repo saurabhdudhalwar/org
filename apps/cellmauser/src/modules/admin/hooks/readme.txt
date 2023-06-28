@@ -1,0 +1,1 @@
+Add all your authentication related hooks files in this folder.

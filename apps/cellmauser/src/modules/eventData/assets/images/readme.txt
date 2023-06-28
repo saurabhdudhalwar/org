@@ -1,0 +1,1 @@
+Add all your event data related images files in this folder.

@@ -1,0 +1,915 @@
+// Page Name : "addReferral"
+// Page Id : "c4ref1"
+
+import { useEffect, useRef, useState } from "react";
+
+import * as Mui from "@mui/material";
+import { useFormik } from "formik";
+import moment from "moment";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import * as yup from "yup";
+
+import AssessmentPopup from "./AssessmentPopup";
+import OtherDetails from "./OtherDetails";
+import ReferralTable from "./ReferralTable";
+import Referrer from "./Referrer";
+import ReferTo from "./ReferTo";
+import ServiceAppointmentsPopup from "./ServiceAppointmentsPopup";
+import useEstablishmentListItems from "../../../../api/useEstablishmentListItems";
+import * as Common from "../../../../common/CommonComponentsIndex";
+import { setIsDrawerOpen } from "../../../../store/CommonAction";
+import { setSnackbar } from "../../../../store/SnackbarAction";
+import {
+  useAddReferral,
+  usePatientReferralDisplay,
+} from "../../api/usePatientReferral";
+import t from "../../assets/translationFiles/addReferralTranslation";
+import { setActiveScreenName } from "../../store/ReferralAction";
+
+const AddReferral = () => {
+  const { language } = useSelector((state: any) => state.language);
+  const isAddReferralMode = useSelector(
+    (state: any) => state.common.isAddReferralMode
+  );
+  const [continueForMoreDetails, setContinueForMoreDetails] = useState(false);
+
+  const {
+    setTitle,
+    setIsLink,
+    setScreenName,
+    setDrawerName,
+  }: { setTitle: any; setIsLink: any; setScreenName: any; setDrawerName: any } =
+    useOutletContext(); // <-- access context value
+
+  useEffect(() => {
+    if (isAddReferralMode === "addReferralMode") {
+      setTitle(t("addReferral"));
+      dispatch(setActiveScreenName("addReferral"));
+      setContinueForMoreDetails(true);
+    } else {
+      setTitle(t("createAnOnReferral"));
+      dispatch(setActiveScreenName("createAnOnReferral"));
+    }
+    setIsLink(true);
+    setScreenName("");
+    setDrawerName("ServiceAppointmentDrawer");
+    dispatch(setIsDrawerOpen(true));
+  }, [language]);
+
+  const [isServiceAppointments, setIsServiceAppointments] = useState(false);
+  const [isAssessment, setIsAssessment] = useState(false);
+  const [acceptReferral, setAcceptReferral] = useState(" ");
+  const { data: establishmentListItem } = useEstablishmentListItems([
+    "service",
+    "clinic type",
+    "type of service",
+    "mode of referral",
+    "patient type",
+    "clinic location",
+    "HP Region",
+    "Method Of Arrival",
+    "Type Of Transport",
+    "Referral Type",
+    "Clinical Priority",
+    "Mode Of Referral",
+    "Display Name",
+  ]);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { patientId } = useSelector((state: any) => state.patient);
+  const { data: displayPatientReferral } = usePatientReferralDisplay(patientId);
+  const { mutate: addReferralDetails, data: addReferralDetailsResponse } =
+    useAddReferral();
+  const settings = displayPatientReferral?.settings ?? {};
+
+  useEffect(() => {
+    if (Object.values(addReferralForm?.errors).length !== 0) {
+      addReferralForm?.validateForm(addReferralForm?.values);
+    }
+  }, [language]);
+
+  const addReferralForm = useFormik({
+    enableReinitialize: true,
+    initialValues: {
+      receivedReferralDate: null,
+      approvedReferralDate: null,
+      dateOfReferral: null,
+      timeOfReferral: null,
+      sourceOfReferral: "",
+      referralType: "",
+      referralReason: "",
+      referringProfessional: "",
+      referrerName: "",
+      modeOfReferral: "",
+      service: "",
+      clinicType: "",
+      clinicLocation: "",
+      team: "",
+      patientCare: "",
+      preferredSexForAssessment: "",
+      clinicalPriority: "",
+      consultant: "",
+      methodOfArrival: "",
+      typeOfTransport: "",
+      timeOfArrival: null,
+      refInvite: "",
+      documentName: "",
+      documentMultipart: "",
+      displayName: "",
+      documentDescription: "",
+      documentDisplayName: "",
+      documentDescriptionNew: "",
+      notes: "",
+    },
+    validationSchema: yup.object().shape({
+      receivedReferralDate: yup
+        .date()
+        .nullable()
+        .when([], {
+          is: () => settings?.cliShowReferralToTreatmentDays === 1,
+          then: yup
+            .date()
+            .nullable()
+            .required(t("receivedReferralDateRequired"))
+            .min(new Date("01/01/1900"), t("invalidDate"))
+            .max(new Date("12/31/2050"), t("invalidDate"))
+            .typeError(t("invalidDate")),
+          otherwise: yup.date().nullable().notRequired(),
+        }),
+      approvedReferralDate: yup
+        .date()
+        .nullable()
+        .when([], {
+          is: () => settings?.cliShowReferralToTreatmentDays === 1,
+          then: yup
+            .date()
+            .nullable()
+            .required(t("approvedReferralDateRequired"))
+            .min(new Date("01/01/1900"), t("invalidDate"))
+            .test(
+              "test",
+              t("invalidRefDate"),
+              (value: any, validationContext) => {
+                const { parent } = validationContext;
+                if (
+                  parent.receivedReferralDate &&
+                  parent.approvedReferralDate &&
+                  parent.receivedReferralDate > parent.approvedReferralDate
+                )
+                  return false;
+                return true;
+              }
+            )
+            .max(new Date("12/31/2050"), t("invalidDate"))
+            .typeError(t("invalidDate")),
+          otherwise: yup
+            .date()
+            .nullable()
+            .min(new Date("01/01/1900"), t("invalidDate"))
+            .test(
+              "test",
+              t("invalidRefDate"),
+              (value: any, validationContext) => {
+                const { parent } = validationContext;
+                if (
+                  parent.receivedReferralDate &&
+                  parent.approvedReferralDate &&
+                  parent.receivedReferralDate > parent.approvedReferralDate
+                )
+                  return false;
+                return true;
+              }
+            )
+            .max(new Date("12/31/2050"), t("invalidDate"))
+            .typeError(t("invalidDate"))
+            .notRequired(),
+        }),
+      dateOfReferral: yup
+        .date()
+        .nullable()
+        .min(new Date("01/01/1900"), t("invalidDate"))
+        .max(new Date("12/31/2050"), t("invalidDate"))
+        .typeError(t("invalidDate")),
+      timeOfReferral: yup.date().nullable().typeError(t("invalidTime")),
+      sourceOfReferral: yup.string().required(t("sourceOfReferralRequired")),
+      service: yup.string().required(t("serviceRequired")),
+      clinicLocation: yup
+        .object()
+        .nullable()
+        .when([], {
+          is: () => settings?.estServiceLocation === 1,
+          then: yup.object().nullable().required(t("clinicLocationRequired")),
+          otherwise: yup.object().nullable().notRequired(),
+        }),
+      team: yup
+        .object()
+        .nullable()
+        .when([], {
+          is: () => settings?.estUseSpecialityAndRegion === 1,
+          then: yup.object().nullable().required(t("teamRequired")),
+          otherwise: yup.object().nullable().notRequired(),
+        }),
+      consultant: yup.string().when([], {
+        is: () => settings?.cliConsultantMandatory === 1,
+        then: yup.string().required(t("consultantRequired")),
+        otherwise: yup.string().notRequired(),
+      }),
+      timeOfArrival: yup.date().nullable().typeError(t("invalidTime")),
+      methodOfArrival: yup
+        .object()
+        .nullable()
+        .when([], {
+          is: () => settings?.cliArrivalMethod === 1,
+          then: yup.object().nullable().required(t("methodOfArrivalRequired")),
+          otherwise: yup.object().nullable().notRequired(),
+        }),
+    }),
+    onSubmit: (values: any) => {
+      addReferralDetails({
+        rttReferralReceivedDate:
+          values?.receivedReferralDate !== "" &&
+          values?.receivedReferralDate !== null
+            ? moment(values?.receivedReferralDate).format("DD/MM/YYYY")
+            : null,
+        rttReferralApprovedDate:
+          values?.approvedReferralDate !== "" &&
+          values?.approvedReferralDate !== null
+            ? moment(values?.approvedReferralDate).format("DD/MM/YYYY")
+            : null,
+        refReferralDate:
+          values?.dateOfReferral !== "" && values?.dateOfReferral !== null
+            ? moment(values?.dateOfReferral).format("DD/MM/YYYY")
+            : null,
+        refTimeSet:
+          values?.timeOfReferral !== "" &&
+          values?.timeOfReferral?.$d !== undefined &&
+          values?.timeOfReferral !== null &&
+          values?.timeOfReferral?.$d !== null
+            ? moment(values?.timeOfReferral?.$d).format("HH:mm")
+            : values?.timeOfReferral !== undefined &&
+              values?.timeOfReferral !== null
+            ? moment(values?.timeOfReferral).format("HH:mm")
+            : null,
+        refEspId: values?.sourceOfReferral,
+        refReferralTypeEliId: values?.referralType.eliId,
+        refReferralTypeText: values?.referralType.eliText,
+        referralReason: [values?.referralReason?.eliId],
+        refPatId: patientId,
+        refEhpId: values?.referringProfessional?.ehpId,
+        refPipId: values?.referrerName?.toString() ?? "",
+        refModeOfReferral: values?.modeOfReferral,
+        refCliId: values?.service,
+        refCliType: values?.clinicType,
+        refClinicLocation: values?.clinicLocation?.eliText,
+        refRegionEliId: values?.team?.eliId?.toString(),
+        refRegionEliText: values?.team?.eliText,
+        refPatientOut: values?.patientCare?.id.toString() ?? "",
+        refPreferredExaminerSex: values?.preferredSexForAssessment,
+        consultant: values?.consultant?.toString() ?? "",
+        refMethodOfArrival: values?.methodOfArrival?.eliText,
+        refTypeOfTransport: values?.typeOfTransport?.eliText,
+        refTimeOfArrival:
+          values?.timeOfArrival !== "" &&
+          values?.timeOfArrival?.$d !== undefined &&
+          values?.timeOfArrival !== null &&
+          values?.timeOfArrival?.$d !== null
+            ? moment(values?.timeOfArrival?.$d).format("HH:mm")
+            : values?.timeOfArrival !== undefined &&
+              values?.timeOfArrival !== null
+            ? moment(values?.timeOfArrival).format("HH:mm")
+            : null,
+        refClinicalPriorityEliId: values?.clinicalPriority?.eliId,
+        refClinicalPriorityText: values?.clinicalPriority?.eliText,
+        refInvite: values?.refInvite,
+        refNotes: values?.notes,
+      });
+      if (acceptReferral === "awaitReferralAcceptance") {
+        dispatch(
+          setSnackbar(
+            true,
+            "success",
+            "Awaiting Referral Added Successfully",
+            2
+          )
+        );
+      } else if (acceptReferral === "acceptReferral&ScheduleAppointment") {
+        navigate("/cellmaUser/eventData/serviceBookAppointment");
+      }
+    },
+  });
+  useEffect(() => {
+    if (addReferralDetailsResponse?.status === 200) {
+      if (
+        addReferralDetailsResponse?.data?.validationCode ===
+        "patient.referral.add.success"
+      ) {
+        dispatch(setSnackbar(true, "success", t("recordAddedSuccessfully"), 4));
+      }
+    }
+  }, [addReferralDetailsResponse]);
+  return (
+    <form onSubmit={addReferralForm.handleSubmit} noValidate>
+      <Mui.Grid container spacing={4}>
+        <Referrer
+          addReferralForm={addReferralForm}
+          establishmentListItem={establishmentListItem}
+          isAddReferralMode={isAddReferralMode}
+        />
+
+        <ReferTo
+          addReferralForm={addReferralForm}
+          establishmentListItem={establishmentListItem}
+          acceptReferral={acceptReferral}
+          isAddReferralMode={isAddReferralMode}
+          continueForMoreDetails={continueForMoreDetails}
+          setContinueForMoreDetails={setContinueForMoreDetails}
+        />
+
+<<<<<<< HEAD
+        {continueForMoreDetails && (
+          <OtherDetails
+            addReferralForm={addReferralForm}
+            establishmentListItem={establishmentListItem}
+            setIsAssessment={setIsAssessment}
+            setAcceptReferral={setAcceptReferral}
+            isAddReferralMode={isAddReferralMode}
+            continueForMoreDetails={continueForMoreDetails}
+=======
+                referralQuery.current = event.target.value;
+              }}
+              onBlur={(event: any) => {
+                addReferralForm.handleBlur("referringProfessional")(event);
+                referralQuery.current = event.target.value;
+              }}
+              autoComplete="off"
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={3}>
+            <Common.CellmaSelectField
+              label={t("referrerName")}
+              name="referrerName"
+              value={addReferralForm.values.referrerName ?? ""}
+              changeevent={addReferralForm.handleChange}
+              onBlur={addReferralForm.handleBlur}
+              list={patientInterestedPartyList?.map((pip: any) => (
+                <Mui.MenuItem
+                  key={pip.pipId}
+                  value={pip.pipId}
+                  sx={{ whiteSpace: "unset" }}
+                >
+                  {pip?.pipFirstname} {pip?.pipSurname}
+                </Mui.MenuItem>
+              ))}
+              error={isError(addReferralForm, "referrerName")}
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={3}>
+            <Common.CellmaSelectField
+              label={t("modeOfReferral")}
+              name="modeOfReferral"
+              value={addReferralForm.values.modeOfReferral ?? ""}
+              onBlur={addReferralForm.handleBlur}
+              changeevent={addReferralForm.handleChange}
+              list={establishmentListItem?.["Mode Of Referral"].map(
+                (referralMode: any) => (
+                  <Mui.MenuItem
+                    key={referralMode.eliId}
+                    value={referralMode.eliText}
+                    sx={{ whiteSpace: "unset" }}
+                  >
+                    {referralMode.eliText}
+                  </Mui.MenuItem>
+                )
+              )}
+              error={isError(addReferralForm, "modeOfReferral")}
+            />
+          </Mui.Grid>
+        </Mui.Grid>
+        <Mui.Grid container item>
+          <Mui.Grid item xs={12} sx={styles.referralHeader}>
+            <Mui.Typography variant="h2">{t("referTo")}</Mui.Typography>
+          </Mui.Grid>
+        </Mui.Grid>
+        <Mui.Grid container item spacing={4}>
+          <Mui.Grid item xs={3}>
+            <Common.CellmaSelectField
+              label={t("service")}
+              name="service"
+              required
+              value={addReferralForm.values.service ?? ""}
+              changeevent={addReferralForm.handleChange}
+              onBlur={addReferralForm.handleBlur}
+              list={clinicList?.map((service: any) => (
+                <Mui.MenuItem
+                  key={service.cliId}
+                  value={service.cliId}
+                  sx={{ whiteSpace: "unset" }}
+                >
+                  {service.cliName}
+                </Mui.MenuItem>
+              ))}
+              error={isError(addReferralForm, "service")}
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={3}>
+            <Common.CellmaSelectField
+              label={t("clinicType")}
+              name="clinicType"
+              value={addReferralForm.values.clinicType ?? ""}
+              onBlur={addReferralForm.handleBlur}
+              changeevent={addReferralForm.handleChange}
+              list={establishmentListItem?.["clinic type"].map(
+                (clinicType: any) => (
+                  <Mui.MenuItem
+                    key={clinicType.eliId}
+                    value={clinicType.eliText}
+                    sx={{ clinicType: "unset" }}
+                  >
+                    {clinicType.eliText}
+                  </Mui.MenuItem>
+                )
+              )}
+              error={isError(addReferralForm, "clinicType")}
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={3}>
+            <Common.CellmaAutoSelectField
+              label={t("clinicLocation")}
+              name="clinicLocation"
+              required={settings?.estServiceLocation === 1}
+              options={establishmentListItem?.["clinic location"]}
+              value={addReferralForm?.values?.clinicLocation ?? ""}
+              onChange={(event: any, value: any) => {
+                addReferralForm?.setFieldValue("clinicLocation", value);
+              }}
+              getOptionLabel={(clinicLocation: any) =>
+                clinicLocation.eliText ?? ""
+              }
+              renderOption={(props: any, clinicLocation: any) => (
+                <li {...props}>{clinicLocation.eliText}</li>
+              )}
+              error={isError(addReferralForm, "clinicLocation")}
+            />
+          </Mui.Grid>
+          {settings?.estUseSpecialityAndRegion === 1 && (
+            <Mui.Grid item xs={3}>
+              <Common.CellmaAutoSelectField
+                label={t("team")}
+                name="team"
+                required
+                options={establishmentListItem?.["HP Region"]}
+                value={addReferralForm?.values?.team ?? ""}
+                onBlur={addReferralForm.handleBlur}
+                onChange={(event: any, value: any) => {
+                  addReferralForm?.setFieldValue("team", value);
+                }}
+                getOptionLabel={(team: any) => team.eliText ?? ""}
+                renderOption={(props: any, team: any) => (
+                  <li {...props}>{team.eliText}</li>
+                )}
+                error={isError(addReferralForm, "team")}
+              />
+            </Mui.Grid>
+          )}
+          <Mui.Grid item xs={3}>
+            <Common.CellmaAutoSelectField
+              label={t("patientCare")}
+              name="patientCare"
+              options={dummyData.PATIENT_CARE ?? []}
+              value={addReferralForm?.values?.patientCare ?? ""}
+              onChange={(event: any, value: any) => {
+                addReferralForm?.setFieldValue("patientCare", value);
+              }}
+              getOptionLabel={(patientCare: any) => patientCare.label ?? ""}
+              renderOption={(props: any, patientCare: any) => (
+                <li {...props}>{patientCare.label}</li>
+              )}
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={3}>
+            <Common.CellmaSelectField
+              label={t("preferredSexForAssessment")}
+              name="preferredSexForAssessment"
+              value={addReferralForm.values.preferredSexForAssessment ?? ""}
+              changeevent={addReferralForm.handleChange}
+              list={dummyData.PREFERRED_SEX_OF_EXAMINER.map(
+                (patientWeb: any) => (
+                  <Mui.MenuItem
+                    key={patientWeb.id}
+                    value={patientWeb.name}
+                    sx={{ whiteSpace: "unset" }}
+                  >
+                    {t(`${patientWeb.name}`)}
+                  </Mui.MenuItem>
+                )
+              )}
+            />
+          </Mui.Grid>
+          {acceptReferral === "awaitReferralAcceptance" && (
+            <Mui.Grid item xs={3}>
+              <Common.CellmaAutoSelectField
+                label={t("clinicalPriority")}
+                name="clinicalPriority"
+                options={establishmentListItem?.["Clinical Priority"]}
+                value={addReferralForm?.values?.clinicalPriority ?? ""}
+                onChange={(event: any, value: any) => {
+                  addReferralForm?.setFieldValue("clinicalPriority", value);
+                }}
+                getOptionLabel={(clinicalPriority: any) =>
+                  clinicalPriority.eliText ?? ""
+                }
+                renderOption={(props: any, clinicalPriority: any) => (
+                  <li {...props}>{clinicalPriority.eliText}</li>
+                )}
+              />
+            </Mui.Grid>
+          )}
+          <Mui.Grid item xs={3}>
+            <Common.CellmaSelectField
+              label={t("consultant")}
+              name="consultant"
+              required={settings?.cliConsultantMandatory === 1}
+              value={addReferralForm.values.consultant ?? ""}
+              onBlur={addReferralForm.handleBlur}
+              changeevent={addReferralForm.handleChange}
+              list={consultantList?.map((consultant: any) => (
+                <Mui.MenuItem
+                  key={consultant.espId}
+                  value={consultant.espId}
+                  sx={{ whiteSpace: "unset" }}
+                >
+                  {consultant?.espTitle} {consultant?.espFirstname}{" "}
+                  {consultant?.espSurname}
+                </Mui.MenuItem>
+              ))}
+              error={isError(addReferralForm, "consultant")}
+            />
+          </Mui.Grid>
+        </Mui.Grid>
+        <Mui.Grid container item>
+          <Mui.Grid item xs={12} sx={styles.referralHeader}>
+            <Mui.Typography variant="h2">{t("otherDetails")}</Mui.Typography>
+          </Mui.Grid>
+        </Mui.Grid>
+        <Mui.Grid container item spacing={4}>
+          {(settings?.cliArrivalMethod === 2 ||
+            settings?.cliArrivalMethod === 1) && (
+            <Mui.Grid item xs={3}>
+              <Common.CellmaAutoSelectField
+                label={t("methodOfArrival")}
+                name="methodOfArrival"
+                required={settings?.cliArrivalMethod === 1}
+                options={establishmentListItem?.["Method Of Arrival"]}
+                value={addReferralForm?.values?.methodOfArrival ?? ""}
+                onChange={(event: any, value: any) => {
+                  addReferralForm?.setFieldValue("methodOfArrival", value);
+                }}
+                getOptionLabel={(methodOfArrival: any) =>
+                  methodOfArrival.eliText ?? ""
+                }
+                renderOption={(props: any, methodOfArrival: any) => (
+                  <li {...props}>{methodOfArrival.eliText}</li>
+                )}
+                onBlur={addReferralForm?.handleBlur}
+                error={isError(addReferralForm, "methodOfArrival")}
+              />
+            </Mui.Grid>
+          )}
+          {settings?.cliDisplayTypeOfTransport === 1 && (
+            <Mui.Grid item xs={3}>
+              <Common.CellmaAutoSelectField
+                label={t("typeOfTransport")}
+                name="typeOfTransport"
+                options={establishmentListItem?.["Type Of Transport"]}
+                value={addReferralForm?.values?.typeOfTransport ?? ""}
+                onChange={(event: any, value: any) => {
+                  addReferralForm?.setFieldValue("typeOfTransport", value);
+                }}
+                getOptionLabel={(typeOfTransport: any) =>
+                  typeOfTransport.eliText ?? ""
+                }
+                renderOption={(props: any, typeOfTransport: any) => (
+                  <li {...props}>{typeOfTransport.eliText}</li>
+                )}
+              />
+            </Mui.Grid>
+          )}
+          <Mui.Grid item xs={3}>
+            <Common.CellmaTimePicker
+              label={t("timeOfArrival")}
+              name="timeOfArrival"
+              onChange={(newTime: Date | null) => {
+                addReferralForm?.setFieldValue("timeOfArrival", newTime);
+              }}
+              value={addReferralForm?.values?.timeOfArrival}
+              onKeyPress={validations?.timeValidation}
+              onBlur={addReferralForm?.handleBlur}
+              error={isError(addReferralForm, "timeOfArrival")}
+            />
+          </Mui.Grid>
+        </Mui.Grid>
+        <Mui.Grid container item>
+          <Mui.Grid item xs={12}>
+            <Common.CellmaLink
+              label={t("addTriageAssessment")}
+              onClick={() => {
+                setIsAssessment(true);
+              }}
+            >
+              {t("addTriageAssessment")}
+            </Common.CellmaLink>
+          </Mui.Grid>
+        </Mui.Grid>
+        <Mui.Grid container item>
+          <Mui.Grid item xs={12}>
+            <Mui.Typography variant="h4">{t("referralLetter")}</Mui.Typography>
+          </Mui.Grid>
+        </Mui.Grid>
+        <Mui.Grid item container spacing={1} sx={{ padding: "10px" }}>
+          <Mui.Grid item xs={2.5} sx={styles.buttonGrid}>
+            <input
+              type="file"
+              accept=".docx,.doc,.txt,.pdf,.html,.jpg,.odt,.htm,.png,.gif,.jpeg"
+              ref={referralLetterInput}
+              onChange={(event: any) => {
+                referralLetterHandler(event, addReferralForm);
+                fileHandler(event);
+              }}
+              style={{ display: "none" }}
+            />
+            <Common.CellmaButton
+              label={t("chooseFile")}
+              onClick={() => referralLetterInput.current?.click()}
+            />
+            {fileName1 !== "" ? (
+              <Mui.Tooltip title={fileName1}>
+                <Mui.Typography sx={styles.typographyGrid}>
+                  {fileName1.substring(0, 15)}.
+                </Mui.Typography>
+              </Mui.Tooltip>
+            ) : (
+              <Mui.Typography sx={styles.typographyGrid}>
+                {t("noFileChosen")}
+              </Mui.Typography>
+            )}
+          </Mui.Grid>
+          <Mui.Grid item xs={2.5}>
+            <Common.CellmaSelectField
+              label={t("displayName")}
+              name="displayName"
+              value={addReferralForm.values.displayName}
+              changeevent={addReferralForm.handleChange}
+              list={dummyData.DISPLAY_NAME.map((patientWeb: any) => (
+                <Mui.MenuItem
+                  key={patientWeb.id}
+                  value={patientWeb.name}
+                  sx={{ whiteSpace: "unset" }}
+                >
+                  {t(`${patientWeb.name}`)}
+                </Mui.MenuItem>
+              ))}
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={4}>
+            <Common.CellmaInputField
+              label={t("notes")}
+              name="documentDescription"
+              placeholder="Notes"
+              multiline
+              rows="3"
+              value={addReferralForm.values.documentDescription}
+              onHandleChange={addReferralForm.handleChange}
+              onBlur={addReferralForm.handleBlur}
+              errorText={isError(addReferralForm, "documentDescription")}
+            />
+          </Mui.Grid>
+        </Mui.Grid>
+        <Mui.Grid container item spacing={1} sx={{ paddingX: "10px" }}>
+          <Mui.Grid item xs={2.5} sx={styles.buttonGrid}>
+            <input
+              type="file"
+              accept=".docx,.doc,.txt,.pdf,.html,.jpg,.odt,.htm,.png,.gif,.jpeg"
+              ref={referralDocumentInput}
+              onChange={(event: any) => {
+                referralDocumentHandler(event, addReferralForm);
+                fileHandler(event);
+              }}
+              style={{ display: "none" }}
+            />
+            <Common.CellmaButton
+              label={t("chooseFile")}
+              onClick={() => referralDocumentInput.current?.click()}
+            />
+            {fileName2 !== "" ? (
+              <Mui.Tooltip title={fileName2}>
+                <Mui.Typography sx={styles.typographyGrid}>
+                  {fileName2.substring(0, 15)}.
+                </Mui.Typography>
+              </Mui.Tooltip>
+            ) : (
+              <Mui.Typography sx={styles.typographyGrid}>
+                {t("noFileChosen")}
+              </Mui.Typography>
+            )}
+          </Mui.Grid>
+          <Mui.Grid item xs={2.5}>
+            <Common.CellmaSelectField
+              label={t("displayName")}
+              name="documentDisplayName"
+              value={addReferralForm.values.documentDisplayName}
+              changeevent={addReferralForm.handleChange}
+              list={dummyData.DISPLAY_NAME.map((patientWeb: any) => (
+                <Mui.MenuItem
+                  key={patientWeb.id}
+                  value={patientWeb.name}
+                  sx={{ whiteSpace: "unset" }}
+                >
+                  {t(`${patientWeb.name}`)}
+                </Mui.MenuItem>
+              ))}
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={4}>
+            <Common.CellmaInputField
+              label={t("notes")}
+              placeholder="Notes"
+              multiline
+              rows="3"
+              name="documentDescriptionNew"
+              value={addReferralForm.values.documentDescriptionNew}
+              onHandleChange={addReferralForm.handleChange}
+              onBlur={addReferralForm.handleBlur}
+              errorText={isError(addReferralForm, "documentDescriptionNew")}
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={2} sx={{ ml: "30px" }}>
+            <Common.CellmaButton label={t("addAdditionalDocuments")} />
+          </Mui.Grid>
+        </Mui.Grid>
+        <Mui.Grid container item sx={{ mt: "50px", paddingX: "13px" }}>
+          <Mui.Grid item xs={3.5}>
+            <Mui.FormControl>
+              <Mui.RadioGroup
+                aria-labelledby="radio-buttons-group"
+                name="controlled-radio-buttons-group"
+                defaultValue="acceptReferral"
+              >
+                <Mui.FormControlLabel
+                  value="awaitReferralAcceptance"
+                  data-testid="Await Referral Acceptance"
+                  control={<Mui.Radio />}
+                  label={t("awaitReferralAcceptance")}
+                  name="refInvite"
+                  onChange={(event: any) => {
+                    addReferralForm.handleChange(event);
+                    setAcceptReferral(event.target.value);
+                  }}
+                />
+                <Mui.FormControlLabel
+                  value="acceptReferral"
+                  data-testid="Accept Referral"
+                  control={<Mui.Radio />}
+                  label={t("acceptReferral")}
+                  name="refInvite"
+                  onChange={addReferralForm.handleChange}
+                />
+                <Mui.FormControlLabel
+                  value="acceptReferral&ScheduleAppointment"
+                  data-testid="Accept Referral & Schedule Appointment"
+                  control={<Mui.Radio />}
+                  label={t("acceptReferral&ScheduleAppointment")}
+                  name="refInvite"
+                  onChange={(event: any) => {
+                    addReferralForm.handleChange(event);
+                    setAcceptReferral(event.target.value);
+                  }}
+                />
+                <Mui.FormControlLabel
+                  value="acceptReferralBookPatientBed"
+                  data-testid="Accept Referral Book Patient Bed"
+                  control={<Mui.Radio />}
+                  label={t("bookPatientBed")}
+                  onChange={addReferralForm.handleChange}
+                  name="refInvite"
+                />
+                <Mui.FormControlLabel
+                  value="acceptReferralSendAppointment"
+                  control={
+                    <Mui.Radio data-testid="Accept Referral Send Appointment" />
+                  }
+                  label={t("sendAppointmentInvite")}
+                  name="refInvite"
+                  onChange={addReferralForm.handleChange}
+                />
+                <Mui.FormControlLabel
+                  value="acceptReferral&AddToTraumaList"
+                  control={
+                    <Mui.Radio data-testid="Accept Referral & Add To Trauma List" />
+                  }
+                  label={t("addToTraumaList")}
+                  name="refInvite"
+                  onChange={addReferralForm.handleChange}
+                />
+              </Mui.RadioGroup>
+            </Mui.FormControl>
+          </Mui.Grid>
+          <Mui.Grid item xs={5.5}>
+            <Common.CellmaInputField
+              rows="4 "
+              multiline
+              label={t("notes")}
+              name="notes"
+              placeholder={t("notes")}
+              value={addReferralForm.values.notes}
+              onHandleChange={addReferralForm.handleChange}
+              onBlur={addReferralForm.handleBlur}
+            />
+          </Mui.Grid>
+        </Mui.Grid>
+
+        <Mui.Grid item xs={12} sx={styles.box}>
+          <Common.CellmaButton
+            tooltipTitle="Next Page is under Construction"
+            label={t("save")}
+            type="submit"
+            onClick={() => {
+              if (addReferralForm?.errors) {
+                window.scrollTo(0, 0);
+              }
+            }}
+>>>>>>> 417291191175b6c5edf9af14b8af1ee3c7ae7aec
+          />
+        )}
+
+        {isAddReferralMode === "addReferralMode" ? (
+          <Mui.Grid item xs={12} sx={styles.box}>
+            <Common.CellmaButton
+              tooltipTitle="Next Page is under Construction"
+              label={t("save")}
+              type="submit"
+              onClick={() => {
+                if (addReferralForm?.errors) {
+                  window.scrollTo(0, 0);
+                }
+              }}
+            />
+          </Mui.Grid>
+        ) : (
+          <Mui.Grid item xs={12} sx={styles.box}>
+            <Common.CellmaButton
+              tooltipTitle="Next Page is under Construction"
+              label={t("add")}
+              type="submit"
+              onClick={() => {
+                navigate("/cellmaUser/referral/serviceReferrals");
+              }}
+            />
+          </Mui.Grid>
+        )}
+
+        {isServiceAppointments && (
+          <ServiceAppointmentsPopup
+            handleCancel={() => {
+              setIsServiceAppointments(false);
+            }}
+          />
+        )}
+        {isAssessment && (
+          <AssessmentPopup
+            handleCancel={() => {
+              setIsAssessment(false);
+            }}
+          />
+        )}
+      </Mui.Grid>
+      {isAddReferralMode === "createOnReferral" && <ReferralTable />}
+    </form>
+  );
+};
+
+export const styles = {
+  referralHeader: {
+    backgroundColor: "primary.light",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "5px",
+  },
+  buttonGrid: {
+    display: "flex",
+    alignItems: "flex-start",
+    mb: "15px",
+  },
+  typographyGrid: {
+    mt: "12px",
+    color: "primary.main",
+    ml: "10px",
+  },
+  box: {
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+};
+
+export default AddReferral;

@@ -1,0 +1,32 @@
+{
+  "links": "Links",
+  "customizableView": "Customizable View",
+  "defaultView": "Default View",
+  "refresh": "Refresh",
+
+  "letters": "Letters",
+<<<<<<< HEAD
+  "pendingReferral": "Pending Referral",
+
+  "referredDate": "Referred Date",
+  "payrollNo": "Payroll No.",
+  "patientName": "Patient Name",
+  "team": "Team",
+  "serviceLocation": "Service Location",
+  "clinicType": "Clinic Type",
+  "form": "Form",
+  "chat": "Chat",
+  "doc": "Doc",
+  "clinicalPriority": "Clinical Priority",
+  "referralStatus": "Referral Status",
+  "reReferral": "Re-Referral",
+  "exportlist": "Export List",
+  "addToWorklist": "Add To Worklist",
+  "createOnReferral": "Add Referral",
+  "accept": "Accept",
+  "reject": "Reject",
+  "completelyReject": "Completely Reject"
+=======
+  "pendingReferral": "Pending Referrals"
+>>>>>>> 417291191175b6c5edf9af14b8af1ee3c7ae7aec
+}

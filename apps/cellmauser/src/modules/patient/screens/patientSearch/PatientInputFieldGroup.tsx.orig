@@ -1,0 +1,758 @@
+import { useEffect, useState } from "react";
+
+import { Backdrop, CircularProgress, MenuItem } from "@mui/material";
+import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
+import { Formik, FormikProps, useFormik } from "formik";
+import moment from "moment";
+import { useDispatch, useSelector } from "react-redux";
+import * as yup from "yup";
+
+import * as Common from "../../../../common/CommonComponentsIndex";
+
+import { setSnackbar } from "../../../../store/SnackbarAction";
+import { resetPageNumber } from "../../../../utils/GeneralUtils";
+import dispatchSnackbar from "../../../../utils/ResponseCodeHandler";
+import * as validations from "../../../../utils/Validations";
+import { formatNHSNumber } from "../../../../utils/Validations";
+import { useDeselectPatient } from "../../../authentication/api/useDeselectPatient";
+import { useGetCustomPatientDetails } from "../../api/useCustomPatient";
+import { useDuplicateCheckDisplay } from "../../api/useDuplicateCheck";
+import { PATIENT_GENDER } from "../../assets/dummyData/CreatePatientDummyData";
+import translate from "../../assets/translationFiles/patientSearchTranslation";
+
+import {
+  setCliBypassPatDetails,
+  setCliPatientMobileMandatory,
+  setEstEthnicityReligionMandatory,
+  setEstHidePipSectionsConsentPhotographTextemail,
+  setEstShowInServicePatient,
+  setIsPatientSelected,
+  setPatientId,
+} from "../../store/PatientAction";
+import { IPatientSearch } from "../../types";
+import usePatientList from "../../api/usePatientList";
+
+const PATIENT_LASTSEEN = [
+  {
+    id: 1,
+    name: "please select",
+    value: null,
+  },
+  {
+    id: 2,
+    name: "1 Day",
+    value: "1",
+  },
+  {
+    id: 3,
+    name: "7 Day",
+    value: "7",
+  },
+  {
+    id: 4,
+    name: "30 Day",
+    value: "30",
+  },
+  {
+    id: 5,
+    name: "90 Day",
+    value: "90",
+  },
+];
+const GridItem = (props: any) => {
+  return (
+    <Grid item xs={12} md={4} lg={12 / 5}>
+      {props.children}
+    </Grid>
+  );
+};
+const CheckBoxGridItem = (props: any) => {
+  return (
+    <Grid
+      item
+      xs={12}
+      md={4}
+      lg={12 / 5}
+      sx={{ display: "flex", alignItems: "center" }}
+    >
+      {props.children}
+    </Grid>
+  );
+};
+const PatientInputFieldGroup = (props: any) => {
+  const { pageNumber, patientId, sgrId } = useSelector(
+    (state: any) => state.patient
+  );
+  const { language } = useSelector((state: any) => state.language);
+  const { estCodePreference } = useSelector((state: any) => state.auth);
+  const { userRoles } = useSelector((element: any) => element.auth);
+  const dispatch = useDispatch();
+  const [showCellmaTable, setShowCellmaTable] = useState(false);
+  const [displayFields, setDisplayFields] = useState<any[]>([
+    { orderId: 0, name: "mpiNumber", mandatory: 0 },
+    { orderId: 1, name: "barcode", mandatory: 0 },
+    { orderId: 2, name: "card", mandatory: 0 },
+    { orderId: 3, name: "nhsNumber", mandatory: 0 },
+    { orderId: 4, name: "hospitalRef", mandatory: 0 },
+    { orderId: 5, name: "givenName", mandatory: 0 },
+    { orderId: 6, name: "familyName", mandatory: 0 },
+    { orderId: 7, name: "sex", mandatory: 0 },
+    { orderId: 8, name: "born", mandatory: 0 },
+    { orderId: 9, name: "mobile", mandatory: 0 },
+    { orderId: 10, name: "postcode", mandatory: 0 },
+    { orderId: 11, name: "mrnNumber", mandatory: 0 },
+    { orderId: 12, name: "identificationId", mandatory: 0 },
+    { orderId: 13, name: "patientNameInOtherLanguage", mandatory: 0 },
+    { orderId: 14, name: "patientSeenInLastDays", mandatory: 0 },
+    {
+      orderId: 15,
+      name: "includeDeceasedPatients",
+      type: "checkbox",
+      mandatory: 0,
+    },
+    {
+      orderId: 16,
+      name: "includeDeceasedService",
+      type: "checkbox",
+      mandatory: 0,
+    },
+    { orderId: 17, name: "soundex", type: "checkbox", mandatory: 0 },
+  ]);
+
+  const {
+    refetch: getCustomDetails,
+    isLoading: customPatientLoading,
+    data: getCustomDetailsResponse,
+  } = useGetCustomPatientDetails({
+    pageName: "patient search",
+    domainName: "patient",
+    displayViewType: "custom",
+  });
+
+  // Api Call for deselect patient
+  const { refetch: deselectPatient } = useDeselectPatient(
+    parseInt(patientId, 10),
+    sgrId,
+    false
+  );
+
+  const { data: duplicateCheckDisplaySettings } = useDuplicateCheckDisplay();
+
+  useEffect(() => {
+    getCustomDetails();
+  }, []);
+
+  const patientSearchForm = useFormik({
+    initialValues: {
+      mpiNumber: "",
+      barcode: "",
+      card: "",
+      nhsNumber: "",
+      hospitalRef: "",
+      givenName: "",
+      familyName: "",
+      sex: "",
+      born: null,
+      mobile: "",
+      postcode: "",
+      mrnNumber: "",
+      identificationId: "",
+      patientNameInOtherLanguage: "",
+      patientSeenInLastDays: "",
+      includeDeceasedPatients: false,
+      includeDeceasedService: false,
+      soundex: false,
+    },
+    validationSchema: yup.object().shape({
+      barcode: yup.string().trim(),
+
+      identificationId: yup.string().when([], {
+        is: () => props?.estPatientSearchIdentifierMandatory === true,
+        then: yup
+          .string()
+          .required(translate("identificationIdRequired", language)),
+        otherwise: yup.string().notRequired(),
+      }),
+      hospitalRef: yup.string().when([], {
+        is: () => props?.estPatientSearchIdentifierMandatory === true,
+        then: yup
+          .string()
+          .required(
+            estCodePreference === "I"
+              ? translate("identificationIdRequired", language)
+              : translate("hospitalRefRequired", language)
+          ),
+        otherwise: yup.string().notRequired(),
+      }),
+      born: yup
+        .date()
+        .nullable()
+        .min(new Date("01/01/1900"), "Invalid date")
+        .max(new Date(), translate("futureDateAlert", language))
+        .typeError(translate("invalidBirthDate", language)),
+      mrnNumber: yup.string().trim().max(30),
+    }),
+    onSubmit: (values: IPatientSearch) => {
+      if (
+        values.mpiNumber === "" &&
+        values.barcode === "" &&
+        values.card === "" &&
+        values.nhsNumber === "" &&
+        values.hospitalRef === "" &&
+        values.givenName === "" &&
+        values.familyName === "" &&
+        values.sex === "" &&
+        moment(values.born).isValid() === false &&
+        values.mobile === "" &&
+        values.postcode === "" &&
+        values.mrnNumber === "" &&
+        values.identificationId === "" &&
+        values.patientNameInOtherLanguage === "" &&
+        values.patientSeenInLastDays === "" &&
+        values.includeDeceasedPatients === false &&
+        values.includeDeceasedService === false &&
+        values.soundex === false
+      ) {
+        dispatch(
+          setSnackbar(
+            true,
+            "warning",
+            translate("searchFieldMsg", language),
+            null
+          )
+        );
+        return;
+      }
+      setShowCellmaTable(true);
+
+      resetPageNumber(dispatch);
+      searchPatients().then((response) => {
+        if (response?.data?.patientList.length !== 0) {
+          dispatch(
+            setCliBypassPatDetails(
+              response?.data?.settings?.cliBypassPatDetails
+            )
+          );
+          dispatch(
+            setEstShowInServicePatient(
+              response?.data?.settings?.estShowInServicePatient === 1
+            )
+          );
+          dispatch(
+            setEstEthnicityReligionMandatory(
+              response?.data?.settings?.estEthnicityReligionMandatory
+            )
+          );
+          dispatch(
+            setCliPatientMobileMandatory(
+              response?.data?.settings?.cliPatientMobileMandatory
+            )
+          );
+          dispatch(
+            setEstHidePipSectionsConsentPhotographTextemail(
+              response?.data?.settings
+                ?.estHidePipSectionsConsentPhotographTextemail
+            )
+          );
+          dispatch(setIsPatientSelected(false));
+          if (response?.data?.patientList.length === 1 && pageNumber === 1) {
+            dispatch(setPatientId(response?.data?.patientList[0].patId));
+          } else {
+            patientId !== null && patientId !== undefined && deselectPatient();
+          }
+        }
+
+        props.setBtnVisible(true);
+        dispatchSnackbar(response, dispatch, language);
+      });
+      props.onAddPatient(values);
+    },
+  });
+
+  const {
+    patientList,
+    patientListCount,
+    refetch: searchPatients,
+  } = usePatientList(
+    {
+      patMpiNumber: patientSearchForm.values?.mpiNumber,
+      patBarcode: patientSearchForm.values?.barcode,
+      patCard: patientSearchForm.values?.card,
+      patNhsRef: patientSearchForm.values?.nhsNumber
+        ? patientSearchForm.values?.nhsNumber?.replace(/\s/g, "")
+        : undefined,
+      patHospitalRef: patientSearchForm.values?.hospitalRef,
+      patFirstname: patientSearchForm.values?.givenName,
+      patSurname: patientSearchForm.values?.familyName,
+      patSex: patientSearchForm.values?.sex,
+      patDob: patientSearchForm.values?.born
+        ? moment(patientSearchForm.values?.born).format("DD/MM/YYYY")
+        : null,
+      patMobile: patientSearchForm.values?.mobile,
+      patPostcode: patientSearchForm.values?.postcode,
+      patMrnNumber: patientSearchForm.values?.mrnNumber,
+      patSoundx: patientSearchForm.values?.soundex === true ? "1" : undefined,
+      patIdentifier: patientSearchForm.values?.identificationId,
+      patNameOtherLang: patientSearchForm.values?.patientNameInOtherLanguage,
+      patInService:
+        patientSearchForm.values?.includeDeceasedService === true
+          ? "on"
+          : undefined,
+      patLastSeenDays: patientSearchForm.values?.patientSeenInLastDays
+        ? patientSearchForm.values?.patientSeenInLastDays
+        : undefined,
+      patDeseased:
+        patientSearchForm.values?.includeDeceasedPatients === true
+          ? "1"
+          : undefined,
+      patExport:
+        userRoles.includes("Administrator") ||
+        userRoles.includes("Patient Administrator")
+          ? "Yes"
+          : "No",
+    },
+    pageNumber,
+    showCellmaTable
+  );
+
+  useEffect(() => {
+    if (patientList !== undefined)
+      props.handleSearch(patientList, patientListCount, showCellmaTable);
+  }, [patientList, props, showCellmaTable]);
+
+  useEffect(() => {
+    if (getCustomDetailsResponse?.status === 200) {
+      if (
+        getCustomDetailsResponse?.data?.validationCode ===
+        "customizabledispalyfield.found"
+      ) {
+        const cdfDisplayFieldJson = JSON.parse(
+          getCustomDetailsResponse?.data?.entity?.cdfDisplayFieldJson
+        );
+        setDisplayFields(cdfDisplayFieldJson?.customViewJson?.displayFields);
+      }
+    }
+  }, [getCustomDetailsResponse]);
+
+  return (
+    <>
+      {customPatientLoading && (
+        <Backdrop sx={{ zIndex: "1500" }} open>
+          <CircularProgress color="primary" disableShrink />
+        </Backdrop>
+      )}
+
+      <form onSubmit={patientSearchForm.handleSubmit}>
+        <Grid container spacing={3}>
+          {displayFields?.map((element: any, index: any) => {
+            return (
+              <>
+                {element?.name === "mpiNumber" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate("mpiNumber", language)}
+                      name="mpiNumber"
+                      value={patientSearchForm.values.mpiNumber}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      errorText={
+                        patientSearchForm.touched.mpiNumber &&
+                        patientSearchForm.errors.mpiNumber
+                      }
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "barcode" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate("barcode", language)}
+                      type="tel"
+                      onInput={(e: any) => {
+                        e.target.value = e.target.value.toString().slice(0, 8);
+                      }}
+                      onCopy={validations.restrictCutCopyPaste}
+                      onCut={validations.restrictCutCopyPaste}
+                      onPaste={validations.restrictCutCopyPaste}
+                      onKeyDown={validations.restrictExponentAndDot}
+                      name="barcode"
+                      value={patientSearchForm.values.barcode}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      errorText={
+                        patientSearchForm.touched.barcode &&
+                        patientSearchForm.errors.barcode
+                      }
+                      autoFocus={props?.focusSetting === false}
+                    />
+                  </GridItem>
+                )}
+                {element?.name === "card" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate("card", language)}
+                      name="card"
+                      value={patientSearchForm.values.card}
+                      onCopy={validations.restrictCutCopyPaste}
+                      onCut={validations.restrictCutCopyPaste}
+                      onPaste={validations.restrictCutCopyPaste}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      errorText={
+                        patientSearchForm.touched.card &&
+                        patientSearchForm.errors.card
+                      }
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "nhsNumber" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate(
+                        props?.identifierLabelSetting === 1
+                          ? "collarNo"
+                          : "nhsNumber",
+                        language
+                      )}
+                      maxLength="20"
+                      name="nhsNumber"
+                      value={patientSearchForm.values.nhsNumber}
+                      onCopy={validations.restrictCutCopyPaste}
+                      onCut={validations.restrictCutCopyPaste}
+                      onPaste={validations.restrictCutCopyPaste}
+                      onKeyPress={validations.nhsNoValidation}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={(event: any) => {
+                        patientSearchForm.setFieldValue(
+                          "nhsNumber",
+                          formatNHSNumber(event.target.value)
+                        );
+                      }}
+                      errorText={
+                        patientSearchForm.touched.nhsNumber &&
+                        patientSearchForm.errors.nhsNumber
+                      }
+                      autoFocus={props?.focusSetting === true}
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "hospitalRef" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={
+                        estCodePreference === "I"
+                                  ? translate("identifier", language)
+                          : translate("hospitalRef", language)
+                      }
+                      maxLength="32"
+                      required={
+                        props?.estPatientSearchIdentifierMandatory === true
+                      }
+                      name="hospitalRef"
+                      value={patientSearchForm.values.hospitalRef}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      onKeyPress={validations.hospitalRefValidation}
+                      errorText={
+                        patientSearchForm.touched.hospitalRef &&
+                        patientSearchForm.errors.hospitalRef
+                      }
+                      onPaste={
+                        validations.restrictPasteEventForSpecialCharacters
+                      }
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "givenName" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate("givenName", language)}
+                      maxLength="60"
+                      name="givenName"
+                      value={patientSearchForm.values.givenName}
+                      style={{ textTransform: "capitalize" }}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      onKeyPress={validations.allowCharHyphenApostropheSpace}
+                      errorText={
+                        patientSearchForm.touched.givenName &&
+                        patientSearchForm.errors.givenName
+                      }
+                      onPaste={
+                        validations.restrictPasteEventForSpecialCharactersAndNumbers
+                      }
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "familyName" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate("familyName", language)}
+                      maxLength="60"
+                      name="familyName"
+                      value={patientSearchForm.values.familyName}
+                      style={{ textTransform: "capitalize" }}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      onPaste={
+                        validations.restrictPasteEventForSpecialCharactersAndNumbers
+                      }
+                      onKeyPress={validations.allowCharHyphenApostropheSpace}
+                      errorText={
+                        patientSearchForm.touched.familyName &&
+                        patientSearchForm.errors.familyName
+                      }
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "sex" && (
+                  <GridItem>
+                    <Common.CellmaSelectField
+                      label={translate("sex", language)}
+                      name="sex"
+                      value={patientSearchForm.values.sex}
+                      changeevent={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      error={
+                        patientSearchForm.touched.sex &&
+                        patientSearchForm.errors.sex
+                      }
+                      list={PATIENT_GENDER.map((gender: any) => (
+                        <MenuItem
+                          sx={{ whiteSpace: "unset" }}
+                          key={gender.id}
+                          value={gender.value}
+                        >
+                          {translate(`${gender.label}`, language)}
+                        </MenuItem>
+                      ))}
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "born" && (
+                  <GridItem>
+                    <Common.CellmaDatePicker
+                      label={translate("born", language)}
+                      value={patientSearchForm.values.born}
+                      maxDate={new Date()}
+                      onChange={(newDate: Date | null) => {
+                        if (
+                          duplicateCheckDisplaySettings?.showUnderEighteenAlert ===
+                          1
+                        ) {
+                          if (
+                            moment().diff(
+                              moment(newDate, "DD/MM/YYYY"),
+                              "years"
+                            ) <= 18
+                          ) {
+                            alert(translate("belowAge18", language));
+                          }
+                        }
+                        patientSearchForm.setFieldValue("born", newDate);
+                      }}
+                      name="born"
+                      onBlur={patientSearchForm.handleBlur}
+                      error={
+                        patientSearchForm.touched.born &&
+                        patientSearchForm.errors.born
+                      }
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "mobile" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate("mobile", language)}
+                      type="tel"
+                      name="mobile"
+                      value={patientSearchForm.values.mobile}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={validations.checkMobileValidation}
+                      onKeyPress={
+                        validations.restrictAlphabetsAndSpecialCharacters
+                      }
+                      onPaste={
+                        validations.restrictPastingCharactersAndSpecialSymbols
+                      }
+                      onInput={(e: any) => {
+                        e.target.value = e.target.value.toString().slice(0, 10);
+                      }}
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "postcode" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate("postcode", language)}
+                      name="postcode"
+                      value={patientSearchForm.values.postcode}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      onPaste={validations.restrictCutCopyPaste}
+                      onKeyPress={validations.allowDigitCharacterSpace}
+                      maxLength="20"
+                      style={{ textTransform: "uppercase" }}
+                      errorText={
+                        patientSearchForm.touched.postcode &&
+                        patientSearchForm.errors.postcode
+                      }
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "mrnNumber" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate("mrnNumber", language)}
+                      type="tel"
+                      name="mrnNumber"
+                      value={patientSearchForm.values.mrnNumber}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      onKeyDown={validations.restrictExponentAndDot}
+                      onPaste={validations.restrictCutCopyPaste}
+                      onInput={(e: any) => {
+                        e.target.value = e.target.value.toString().slice(0, 30);
+                      }}
+                      errorText={
+                        patientSearchForm.touched.mrnNumber &&
+                        patientSearchForm.errors.mrnNumber
+                      }
+                    />
+                  </GridItem>
+                )}
+                {/* If "Patient Unique/Photographic Identifications" setting is on then Show "IdentificationId" field */}
+                {element?.name === "identificationId" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate("identificationId", language)}
+                      name="identificationId"
+                      value={patientSearchForm.values.identificationId}
+                      required={
+                        props?.estPatientSearchIdentifierMandatory === true
+                      }
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      maxLength="30"
+                      onPaste={validations.restrictCutCopyPaste}
+                      errorText={
+                        patientSearchForm.touched.identificationId &&
+                        patientSearchForm.errors.identificationId
+                      }
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "patientNameInOtherLanguage" && (
+                  <GridItem>
+                    <Common.CellmaInputField
+                      label={translate("patientNameInOtherLanguage", language)}
+                      name="patientNameInOtherLanguage"
+                      value={
+                        patientSearchForm.values.patientNameInOtherLanguage
+                      }
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                      onKeyPress={
+                        validations.allowOnlyCharHyphenApostropheSpaceForwardSlash
+                      }
+                      maxLength="30"
+                      errorText={
+                        patientSearchForm.touched.patientNameInOtherLanguage &&
+                        patientSearchForm.errors.patientNameInOtherLanguage
+                      }
+                      onPaste={
+                        validations.restrictPasteEventForSpecialCharactersAndNumbers
+                      }
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "patientSeenInLastDays" && (
+                  <GridItem>
+                    <Common.CellmaSelectField
+                      label={translate("patientSeenInLastDays", language)}
+                      name="patientSeenInLastDays"
+                      value={patientSearchForm.values.patientSeenInLastDays}
+                      changeevent={patientSearchForm.handleChange}
+                      blurevent={patientSearchForm.handleBlur}
+                      error={
+                        patientSearchForm.touched.patientSeenInLastDays &&
+                        patientSearchForm.errors.patientSeenInLastDays
+                      }
+                      list={PATIENT_LASTSEEN.map((lastseen: any) => (
+                        <MenuItem
+                          sx={{ whiteSpace: "unset" }}
+                          key={lastseen.id}
+                          value={lastseen.value}
+                        >
+                          {translate(`${lastseen.name}`, language)}
+                        </MenuItem>
+                      ))}
+                    />
+                  </GridItem>
+                )}
+                {element?.name === "includeDeceasedPatients" && (
+                  <GridItem>
+                    <Common.CellmaCheckbox
+                      label={translate("includeDeceasedPatients", language)}
+                      inputName="includeDeceasedPatients"
+                      defaultChecked={props?.estShowInServicePatient === 0}
+                      value={patientSearchForm.values.includeDeceasedPatients}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "includeDeceasedService" && (
+                  <GridItem>
+                    <Common.CellmaCheckbox
+                      label={translate("includeDeceasedService", language)}
+                      inputName="includeDeceasedService"
+                      defaultChecked={props?.estShowInServicePatient === 1}
+                      value={patientSearchForm.values.includeDeceasedService}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                    />
+                  </GridItem>
+                )}
+
+                {element?.name === "soundex" && (
+                  <GridItem>
+                    <Common.CellmaCheckbox
+                      label={translate("soundex", language)}
+                      inputName="soundex"
+                      value={patientSearchForm.values.soundex}
+                      onHandleChange={patientSearchForm.handleChange}
+                      onBlur={patientSearchForm.handleBlur}
+                    />
+                  </GridItem>
+                )}
+              </>
+            );
+          })}
+        </Grid>
+
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Common.CellmaButton
+            label={translate("searchButton", language)}
+            type="submit"
+          />
+        </Box>
+      </form>
+    </>
+  );
+};
+
+export default PatientInputFieldGroup;

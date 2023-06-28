@@ -1,0 +1,1 @@
+Add all your event data related types files in this folder.

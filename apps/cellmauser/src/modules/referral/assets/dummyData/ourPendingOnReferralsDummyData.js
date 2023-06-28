@@ -1,0 +1,42 @@
+export const ourPendingReferralRows = [
+  {
+    referredTo: "Dummy Data",
+    clinicLocation: "Dummy Data",
+    referralDate: "Dummy Data",
+    patientName: "Dummy Data",
+    referredFrom: "Dummy Data",
+    notes: "Dummy Data",
+  },
+  {
+    referredTo: "Accidental emergency",
+    clinicLocation: "Default Location",
+    referralDate: "02/03/2023",
+    patientName: "Mr. Luke",
+    referredFrom: "General Medicine",
+    notes: "Testing for General Medicine",
+  },
+  {
+    referredTo: "Dialysis",
+    clinicLocation: "Default Location",
+    referralDate: "02/03/2023",
+    patientName: "Mr. David",
+    referredFrom: "General Medicine",
+    notes: "Testing for General Medicine",
+  },
+  {
+    referredTo: "General Medicine",
+    clinicLocation: "Default Location",
+    referralDate: "02/03/2023",
+    patientName: "Mr. Luke",
+    referredFrom: "General Medicine",
+    notes: "Testing for General Medicine",
+  },
+  {
+    referredTo: "Audiology",
+    clinicLocation: "Default Location",
+    referralDate: "02/03/2023",
+    patientName: "Mr. David",
+    referredFrom: "General Medicine",
+    notes: "Testing for General Medicine",
+  },
+];

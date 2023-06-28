@@ -1,0 +1,1 @@
+Add all your patient module related routes files in this folder.

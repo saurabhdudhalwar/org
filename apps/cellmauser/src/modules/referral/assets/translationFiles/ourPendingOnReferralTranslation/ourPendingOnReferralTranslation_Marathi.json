@@ -1,0 +1,10 @@
+{
+  "ourPendingOnReferral": "रेफरलवर प्रलंबित सेवा",
+  "referredTo": "संदर्भित",
+  "clinicLocation": "क्लिनिक स्थान",
+  "referralDate": "रेफरल तारीख",
+  "patientName": "रुग्णाचे नाव",
+  "referredFrom": "कडून संदर्भित",
+  "notes": "नोट्स",
+  "noDataFound": "माहिती आढळली नाही"
+}

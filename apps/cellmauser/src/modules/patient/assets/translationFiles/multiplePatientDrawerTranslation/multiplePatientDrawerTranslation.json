@@ -1,0 +1,30 @@
+{
+  "English": {
+    "search": "Search",
+    "add": "Add",
+    "labels": "Labels",
+    "insurance": "Insurance",
+    "duplicateCheck": "Duplicate Check",
+    "gp": "GP",
+    "interestedParty": "Interested Party",
+    "patient": "Patient",
+    "consent": "Consent",
+    "appointment": "Appointments",
+    "referral": "Referral",
+    "view": "View"
+  },
+  "Marathi": {
+    "search": "शोधा",
+    "add": "अॅड",
+    "labels": "लेबल्स",
+    "insurance": "विमा",
+    "duplicateCheck": "डुप्लिकेट चेक",
+    "gp": "जी.पी",
+    "interestedParty": "इच्छुक पक्ष",
+    "patient": "पेशंट",
+    "consent": "संमती",
+    "appointment": "नियुक्ती",
+    "referral": "रेफरल",
+    "view": "पहा"
+  }
+}

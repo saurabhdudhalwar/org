@@ -1,0 +1,290 @@
+import { useEffect } from "react";
+
+import * as Mui from "@mui/material";
+import { useFormik } from "formik";
+import { useSelector } from "react-redux";
+import * as yup from "yup";
+
+import * as Common from "../../../../common/CommonComponentsIndex";
+import { isError } from "../../../../utils/GeneralUtils";
+import * as validations from "../../../../utils/Validations";
+import { formatNHSNumber } from "../../../../utils/Validations";
+import * as dummyData from "../../assets/dummyData/ServiceAppointmentsDummyData";
+import t from "../../assets/translationFiles/serviceAppointmentTranslation";
+
+const GridItem = (props: any) => {
+  return (
+    <Mui.Grid item xs={12 / 5}>
+      {props.children}
+    </Mui.Grid>
+  );
+};
+
+const AppointmentsInputFieldGroup = (prop: any) => {
+  const { language } = useSelector((state: any) => state.language);
+
+  useEffect(() => {
+    if (Object.values(serviceAppointmentForm?.errors).length !== 0) {
+      serviceAppointmentForm.validateForm(serviceAppointmentForm?.values);
+    }
+  }, [language]);
+
+  const serviceAppointmentForm = useFormik({
+    initialValues: {
+      startDate: "",
+      endDate: "",
+      locations: "",
+      clinicType: "",
+      rooms: "",
+      appointmentsFor: "",
+      patientBarcode: "",
+      nhsRef: "",
+      patientFamilyName: "",
+      status: "",
+      from: "",
+      to: "",
+      saveAsDefault: "",
+    },
+    validationSchema: yup.object().shape({
+      startDate: yup
+        .date()
+        .nullable()
+        .when([], {
+          is: () => serviceAppointmentForm.values.patientBarcode === "",
+          then: yup
+            .date()
+            .nullable()
+            .required(t("startDateRequired"))
+            .min(new Date("01/01/1900"), t("invalidDate"))
+            .max(new Date("12/31/2050"), t("invalidDate"))
+            .typeError(t("invalidDate")),
+          otherwise: yup.date().nullable().notRequired(),
+        }),
+      endDate: yup
+        .date()
+        .nullable()
+        .when([], {
+          is: () => serviceAppointmentForm.values.patientBarcode === "",
+          then: yup
+            .date()
+            .nullable()
+            .required(t("endDateRequired"))
+            .min(yup.ref("startDate"), t("invalidEndDate"))
+            .max(new Date("12/31/2050"), t("invalidDate"))
+            .typeError(t("invalidDate")),
+          otherwise: yup.date().nullable().notRequired(),
+        }),
+              name="startDate"
+              required={serviceAppointmentForm.values.patientBarcode === ""}
+              minDate={new Date("01/01/1900")}
+              maxDate={new Date("12/31/2050")}
+              value={serviceAppointmentForm.values.startDate}
+              onChange={(newDate: any) =>
+                serviceAppointmentForm.setFieldValue("startDate", newDate)
+              }
+              onBlur={serviceAppointmentForm.handleBlur}
+              error={isError(serviceAppointmentForm, "startDate")}
+            />
+          </GridItem>
+          <GridItem>
+            <Common.CellmaDatePicker
+              label={t("endDate")}
+              name="endDate"
+              required={serviceAppointmentForm.values.patientBarcode === ""}
+              minDate={new Date("01/01/1900")}
+              maxDate={new Date("12/31/2050")}
+              value={serviceAppointmentForm.values.endDate}
+              onChange={(newDate: any) =>
+                serviceAppointmentForm.setFieldValue("endDate", newDate)
+              }
+              onBlur={serviceAppointmentForm.handleBlur}
+              error={isError(serviceAppointmentForm, "endDate")}
+            />
+          </GridItem>
+          <GridItem>
+            <Common.CellmaAutoSelectField
+              label={t("locations")}
+              name="locations"
+              ariaLabel="locations"
+              value={serviceAppointmentForm.values.locations ?? ""}
+              options={dummyData.LOCATIONS}
+              getOptionLabel={(locations: any) => locations.label ?? ""}
+              renderOption={(props: any, locations: any) => (
+                <li {...props}>{locations.label}</li>
+              )}
+              onChange={(event: any, value: any) => {
+                serviceAppointmentForm.setFieldValue("locations", value);
+              }}
+            />
+          </GridItem>
+          <GridItem>
+            <Common.CellmaAutoSelectField
+              dummyData
+              label={t("clinicType")}
+              ariaLabel="clinicType"
+              name="clinicType"
+              value={serviceAppointmentForm.values.clinicType ?? ""}
+              options={dummyData.CLINIC_TYPE}
+              getOptionLabel={(clinicType: any) => clinicType.label ?? ""}
+              renderOption={(props: any, clinicType: any) => (
+                <li {...props}>{clinicType.label}</li>
+              )}
+              onChange={(event: any, value: any) => {
+                serviceAppointmentForm.setFieldValue("clinicType", value);
+              }}
+            />
+          </GridItem>
+          <GridItem>
+            <Common.CellmaAutoSelectField
+              label={t("rooms")}
+              ariaLabel="rooms"
+              name="rooms"
+              value={serviceAppointmentForm.values.rooms ?? ""}
+              options={dummyData.ROOM}
+              getOptionLabel={(rooms: any) => rooms.label ?? ""}
+              renderOption={(props: any, rooms: any) => (
+                <li {...props}>{rooms.label}</li>
+              )}
+              onChange={(event: any, value: any) => {
+                serviceAppointmentForm.setFieldValue("rooms", value);
+              }}
+            />
+          </GridItem>
+          <GridItem>
+            <Common.CellmaAutoSelectField
+              label={t("appointmentsFor")}
+              ariaLabel="appointmentsFor"
+              name="appointmentsFor"
+              value={serviceAppointmentForm.values.appointmentsFor ?? ""}
+              options={dummyData.APPOINTMENT_FOR}
+              getOptionLabel={(appointmentsFor: any) =>
+                appointmentsFor.label ?? ""
+              }
+              renderOption={(props: any, appointmentsFor: any) => (
+                <li {...props}>{appointmentsFor.label}</li>
+              )}
+              onChange={(event: any, value: any) => {
+                serviceAppointmentForm.setFieldValue("appointmentsFor", value);
+              }}
+            />
+          </GridItem>
+          <GridItem>
+            <Common.CellmaInputField
+              label={t("patientBarcode")}
+              name="patientBarcode"
+              value={serviceAppointmentForm.values.patientBarcode ?? ""}
+              maxLength="8"
+              onKeyPress={validations.allowOnlyDigit}
+              onCopy={validations.restrictCutCopyPaste}
+              onCut={validations.restrictCutCopyPaste}
+              onPaste={validations.restrictCutCopyPaste}
+              onHandleChange={serviceAppointmentForm.handleChange}
+            />
+          </GridItem>
+          <GridItem>
+            <Common.CellmaInputField
+              label={t("nhsRef")}
+              name="nhsRef"
+              maxLength="20"
+              value={serviceAppointmentForm.values.nhsRef ?? ""}
+              onCopy={validations.restrictCutCopyPaste}
+              onCut={validations.restrictCutCopyPaste}
+              onPaste={validations.restrictCutCopyPaste}
+              onKeyPress={validations.nhsNoValidation}
+              onHandleChange={serviceAppointmentForm.handleChange}
+              onBlur={(event: any) => {
+                serviceAppointmentForm.setFieldValue(
+                  "nhsRef",
+                  formatNHSNumber(event.target.value)
+                );
+              }}
+              errorText={isError(serviceAppointmentForm, "nhsRef")}
+            />
+          </GridItem>
+          <GridItem>
+            <Common.CellmaInputField
+              label={t("patientFamilyName")}
+              name="patientFamilyName"
+              style={{ textTransform: "capitalize" }}
+              value={serviceAppointmentForm.values.patientFamilyName ?? ""}
+              onKeyPress={validations.allowCharHyphenApostropheSpace}
+              onPaste={
+                validations.restrictPasteEventForSpecialCharactersAndNumbers
+              }
+              onHandleChange={serviceAppointmentForm.handleChange}
+            />
+          </GridItem>
+          <GridItem>
+            <Common.CellmaAutoSelectField
+              label={t("status")}
+              ariaLabel="status"
+              name="status"
+              value={serviceAppointmentForm.values.status ?? ""}
+              options={dummyData.STATUS}
+              getOptionLabel={(status: any) => status.label ?? ""}
+              renderOption={(props: any, status: any) => (
+                <li {...props}>{status.label}</li>
+              )}
+              onChange={(event: any, value: any) => {
+                serviceAppointmentForm.setFieldValue("status", value);
+              }}
+            />
+          </GridItem>
+          <Mui.Grid item xs={12 / 5}>
+            <Common.CellmaAutoSelectField
+              label={t("from")}
+              ariaLabel="from"
+              name="from"
+              value={serviceAppointmentForm.values.status ?? ""}
+              options={dummyData.FROM}
+              getOptionLabel={(from: any) => from.label ?? ""}
+              renderOption={(props: any, from: any) => (
+                <li {...props}>{from.label}</li>
+              )}
+              onChange={(event: any, value: any) => {
+                serviceAppointmentForm.setFieldValue("from", value);
+              }}
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={12 / 5}>
+            <Common.CellmaAutoSelectField
+              dummyData
+              label={t("to")}
+              ariaLabel="to"
+              name="to"
+              value={serviceAppointmentForm.values.to ?? ""}
+              options={dummyData.TO}
+              getOptionLabel={(to: any) => to.label ?? ""}
+              renderOption={(props: any, to: any) => (
+                <li {...props}>{to.label}</li>
+              )}
+              onChange={(event: any, value: any) => {
+                serviceAppointmentForm.setFieldValue("to", value);
+              }}
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={12 / 5} sx={styles.alignCheckbox}>
+            <Common.CellmaCheckbox
+              label={t("saveAsDefault")}
+              inputName="saveAsDefault"
+              value={serviceAppointmentForm.values.saveAsDefault}
+              onHandleChange={serviceAppointmentForm.handleChange}
+              onBlur={serviceAppointmentForm.handleBlur}
+            />
+          </Mui.Grid>
+          <Mui.Grid item xs={12 / 5} sx={styles.alignButton}>
+            <Common.CellmaButton label={t("search")} type="submit" />
+            <Common.CellmaButton label={t("clear")} />
+          </Mui.Grid>
+        </Mui.Grid>
+      </Mui.Grid>
+    </form>
+  );
+};
+
+export default AppointmentsInputFieldGroup;
+
+const styles = {
+  alignCheckbox: { display: "flex", alignItems: "center", gap: 1 },
+  alignButton: { display: "flex", alignItems: "center", gap: 2 },
+};

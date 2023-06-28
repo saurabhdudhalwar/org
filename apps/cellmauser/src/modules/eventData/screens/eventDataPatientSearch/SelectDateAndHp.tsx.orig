@@ -1,0 +1,437 @@
+import { useEffect, useState } from "react";
+
+import * as Mui from "@mui/material";
+import { common } from "@mui/material/colors";
+import dayjs from "dayjs";
+import { useFormik } from "formik";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
+import HpTotalAppointmentCount from "./HpTotalAppointmentCount";
+import CellmaCalendarPicker from "../../../../common/CellmaCalendarPicker";
+import * as Common from "../../../../common/CommonComponentsIndex";
+import { setSelectedDate } from "../../../user/store/HpDiaryAction";
+import {
+  useGetClinicLocation,
+  useGetClinicType,
+  useGetRoomsList,
+} from "../../api/useAppointment";
+import {
+  useGetTeamList,
+  useHealthProfessionalList,
+} from "../../api/useServiceAppointmentSidebar";
+import * as dummyData from "../../assets/dummyData/SelectDateAndHpDummyData";
+import t from "../../assets/translationFiles/commonEventDataTranslation";
+import {
+  setIsEnableBlockingMode,
+  setIsNextAvailableAppointment,
+} from "../../store/EventDataAction";
+
+const SelectDateAndHp = () => {
+  const [isHpSearched, setIsHpSearched] = useState(false);
+  const [slotBooked, setSlotBooked] = useState();
+  const [isShowHpAppointment, setIsShowHpAppointment] = useState(false);
+  const [selectedHp, setSelectedHp] = useState("");
+  const [selectedClinicLocation] = useState("Location");
+  const [specialtyEliId, setSpecialtyEliId] = useState<any>();
+  const [clinicTypeEliId, setClinicTypeEliId] = useState<any>();
+  const [teamId, setTeamId] = useState<any>();
+  const [serviceLocationId, setServiceLocationId] = useState<any>();
+  const [formData, setFormData] = useState<any>();
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { language } = useSelector((state: any) => state.language);
+  const { selectedDate } = useSelector((state: any) => state?.HpDiary);
+  const {
+    isUseSpecialtyAndRegionSetting,
+    isEnableBlockingMode,
+    isNextAvailableAppointment,
+    activeScreenName,
+  } = useSelector((state: any) => state.eventDataReducer);
+
+  // API call for get clinic type
+
+  const { clinicType, refetch: getClinicTypeRefetch } =
+    useGetClinicType(specialtyEliId);
+
+  // API call for get clinic location
+
+  const { clinicLocation, refetch: getClinicLocationRefetch } =
+    useGetClinicLocation(clinicTypeEliId);
+
+  // API call for get team
+  const { clinicTypesLocationList, refetch: getTeamRefetch } = useGetTeamList({
+    clinicTypeEliId,
+    serviceLocationId,
+    specialityEliId: 0,
+  });
+
+  // API call for get health professionals
+  const { healthProfessionalList, refetch: getHealthProfessionalRefetch } =
+    useHealthProfessionalList({
+      speciality: 0,
+      clinicType: formData?.clinicType?.ctlClinicTypeId,
+      team: formData?.team?.ctlRegionEliId ?? 0,
+      serviceLocation: formData?.clinicLocation?.ctlClinicLocationId,
+    });
+
+  // API call for get available rooms list
+
+  const { appointmentRoomList } = useGetRoomsList(
+    specialtyEliId,
+    clinicTypeEliId,
+    clinicLocation,
+    teamId
+  );
+
+  // handler for Select Hp
+  const handlerServiceBookAppointment = () => {
+    setIsHpSearched(true);
+    navigate("/cellmaUser/eventData/serviceBookAppointment", {
+      state: {
+        selectedHp,
+        selectedClinicLocation,
+      },
+    });
+  };
+
+  // handler for book an appointment
+  const handlerShowHp = (hpName: any) => {
+    setIsShowHpAppointment(true);
+    setSelectedHp(hpName);
+    navigate("/cellmaUser/eventData/serviceBookAppointment", {
+      state: {
+        selectedHp: hpName,
+        selectedClinicLocation,
+      },
+    });
+  };
+
+  useEffect(() => {
+    getClinicLocationRefetch();
+    getClinicTypeRefetch();
+    if (clinicTypeEliId !== undefined && serviceLocationId !== undefined)
+      getTeamRefetch();
+  }, [clinicTypeEliId, specialtyEliId, serviceLocationId]);
+
+  useEffect(() => {
+    if (formData !== undefined) getHealthProfessionalRefetch();
+  }, [formData]);
+
+  const selectDateAndHpForm = useFormik({
+    enableReinitialize: true,
+    initialValues: {
+      selectDateForAppointment: "",
+      specialty: "",
+      clinicType: "",
+      clinicLocation: "",
+      team: "",
+    },
+    onSubmit: (values: any) => {
+      setFormData(values);
+    },
+  });
+
+  return (
+    <form onSubmit={selectDateAndHpForm.handleSubmit} noValidate>
+      <Mui.Grid container spacing={1}>
+        <Mui.Grid item xs={12}>
+          <Mui.Typography variant="h2">
+            {t("selectDateForAppointment")}
+          </Mui.Typography>
+        </Mui.Grid>
+        <Mui.Grid item xs={12} sx={{ marginLeft: "-20px" }}>
+          <CellmaCalendarPicker
+            label="selectDateForAppointment"
+            // name="selectDateForAppointment"
+            date={dayjs(selectedDate)}
+            onChange={(newDate: any) => {
+              dispatch(setSelectedDate(newDate?.$d));
+            }}
+          />
+        </Mui.Grid>
+        {!isNextAvailableAppointment && activeScreenName !== "roomDiary" && (
+          <Mui.Grid item xs={12} sx={styles.gridItem}>
+            <Common.CellmaButton
+              label={t("nextAvailableAppointment")}
+              onClick={() => {
+                dispatch(setIsNextAvailableAppointment(true));
+                // passed hardcoded value for visualization purpose
+                handlerShowHp("Dr.John");
+              }}
+            />
+          </Mui.Grid>
+        )}
+        {isUseSpecialtyAndRegionSetting && activeScreenName !== "roomDiary" && (
+          <Mui.Grid item xs={10}>
+            <Common.CellmaAutoSelectField
+              label={t("specialty")}
+              name="specialty"
+              options={dummyData.SPECIALTY}
+              value={selectDateAndHpForm?.values?.specialty ?? ""}
+              onChange={(event: any, value: any) => {
+                selectDateAndHpForm?.setFieldValue("specialty", value);
+                setSpecialtyEliId(value?.id);
+                selectDateAndHpForm.setFieldValue("clinicType", "");
+                selectDateAndHpForm.setFieldValue("clinicLocation", "");
+                selectDateAndHpForm.setFieldValue("team", "");
+              }}
+              getOptionLabel={(specialty: any) => specialty.label ?? ""}
+              renderOption={(props: any, specialty: any) => (
+                <li {...props}>{specialty.label}</li>
+              )}
+            />
+          </Mui.Grid>
+        )}
+
+        {activeScreenName !== "roomDiary" && (
+          <Mui.Grid item xs={10}>
+            <Common.CellmaAutoSelectField
+              label={t("clinicType")}
+              name="clinicType"
+              options={clinicType}
+              value={selectDateAndHpForm?.values?.clinicType ?? ""}
+              onChange={(event: any, value: any) => {
+                selectDateAndHpForm?.setFieldValue("clinicType", value);
+                setClinicTypeEliId(value?.ctlClinicTypeId);
+                selectDateAndHpForm.setFieldValue("clinicLocation", "");
+                selectDateAndHpForm.setFieldValue("team", "");
+              }}
+              getOptionLabel={(clinicType: any) =>
+                clinicType?.ctlClinicTypeText ?? ""
+              }
+              renderOption={(props: any, clinicType: any) => (
+                <li {...props}>{clinicType?.ctlClinicTypeText}</li>
+              )}
+            />
+          </Mui.Grid>
+        )}
+        {activeScreenName !== "roomDiary" && (
+          <Mui.Grid item xs={10}>
+            <Common.CellmaAutoSelectField
+              label={t("clinicLocation")}
+              name="clinicLocation"
+              options={clinicLocation}
+              value={selectDateAndHpForm?.values?.clinicLocation ?? ""}
+              onChange={(event: any, value: any) => {
+                selectDateAndHpForm?.setFieldValue("clinicLocation", value);
+                setServiceLocationId(value?.ctlClinicLocationId);
+                selectDateAndHpForm.setFieldValue("team", "");
+              }}
+              getOptionLabel={(clinicLocation: any) =>
+                clinicLocation.ctlClinicLocationText ?? ""
+              }
+              renderOption={(props: any, clinicLocation: any) => (
+                <li {...props}>{clinicLocation.ctlClinicLocationText}</li>
+              )}
+            />
+          </Mui.Grid>
+        )}
+        {isUseSpecialtyAndRegionSetting && activeScreenName !== "roomDiary" && (
+          <Mui.Grid item xs={10}>
+            <Common.CellmaAutoSelectField
+              label={t("team")}
+              name="team"
+              options={clinicTypesLocationList}
+              value={selectDateAndHpForm?.values?.team ?? ""}
+              onChange={(event: any, value: any) => {
+                selectDateAndHpForm?.setFieldValue("team", value);
+              }}
+              getOptionLabel={(team: any) => team?.ctlRegionEliText ?? ""}
+              renderOption={(props: any, team: any) => (
+                <li {...props}>{team?.ctlRegionEliText}</li>
+              )}
+            />
+          </Mui.Grid>
+        )}
+        {activeScreenName !== "roomDiary" && (
+          <Mui.Grid item xs={12} sx={styles.gridItem}>
+            <Common.CellmaButton
+              label={t("search")}
+              onClick={handlerServiceBookAppointment}
+              type="submit"
+            />
+          </Mui.Grid>
+        )}
+        {isHpSearched && (
+          <Mui.Grid item container spacing={1}>
+            {isUseSpecialtyAndRegionSetting && (
+              <Mui.Grid item xs={12} sx={styles.gridItem}>
+                <Mui.Typography variant="h2">
+                  {t("roomAvailableAt")}
+                </Mui.Typography>
+              </Mui.Grid>
+            )}
+            {isUseSpecialtyAndRegionSetting && (
+              <Mui.Grid item container sx={styles.scrollBar}>
+                {appointmentRoomList.map((roomAvailable: any) => (
+                  <Mui.Grid
+                    item
+                    xs={4}
+                    key={roomAvailable.arsRoomEliId}
+                    sx={styles.slotButtonGrid}
+                  >
+                    <Common.CellmaButton
+                      label={roomAvailable.arsName}
+                      borderColor={common.white}
+                      color={
+                        slotBooked === roomAvailable.arsName
+                          ? "primary.dark"
+                          : "common.black"
+                      }
+                      backgroundColor={
+                        slotBooked === roomAvailable.arsName
+                          ? "primary.light"
+                          : "grey.200"
+                      }
+                      borderRadius={5}
+                      onClick={() => {
+                        setSlotBooked(roomAvailable.arsName);
+                      }}
+                    />
+                  </Mui.Grid>
+                ))}
+              </Mui.Grid>
+            )}
+            <Mui.Grid item xs={12} sx={styles.gridItem}>
+              <Mui.Typography variant="h2">
+                {t("healthProfessionals")}
+              </Mui.Typography>
+            </Mui.Grid>
+            {!isUseSpecialtyAndRegionSetting &&
+              healthProfessionalList.length !== 0 &&
+              healthProfessionalList?.map((healthProfessional: any) => (
+                <Mui.Grid
+                  item
+                  xs={12}
+                  sx={styles.gridItem}
+                  key={healthProfessional?.padEspId}
+                >
+                  <Common.CellmaLink
+                    label="HP Name"
+                    onClick={() => {
+                      window.scrollTo(0, 0);
+                      handlerShowHp(
+                        healthProfessional?.healthProfessionalsName
+                      );
+                    }}
+                    selected={
+                      selectedHp === healthProfessional?.healthProfessionalsName
+                    }
+                  >
+                    {healthProfessional?.healthProfessionalsName}
+                  </Common.CellmaLink>
+                </Mui.Grid>
+              ))}
+            {healthProfessionalList.length === 0 && (
+              <Mui.Grid item xs={12} sx={styles.gridItem}>
+                <Mui.Typography>
+                  {t("noHpForThisService")}
+                </Mui.Typography>
+              </Mui.Grid>
+            )}
+            {isUseSpecialtyAndRegionSetting && (
+              <Mui.Grid item container sx={styles.scrollBar}>
+                {healthProfessionalList?.map((healthProfessional: any) => (
+                  <Mui.Grid
+                    item
+                    xs={12}
+                    key={healthProfessional.padEspId}
+                    sx={{ display: "flex", justifyContent: "flex-start" }}
+                  >
+                    <Common.CellmaCheckbox
+                      name={healthProfessional?.healthProfessionalsName}
+                      label={healthProfessional?.healthProfessionalsName}
+                      color="primary.dark"
+                    />
+                  </Mui.Grid>
+                ))}
+              </Mui.Grid>
+            )}
+            {isUseSpecialtyAndRegionSetting && (
+              <Mui.Grid item xs={12} sx={styles.gridItem}>
+                <Common.CellmaButton
+                  label={t("showCalender")}
+                  onClick={() => {
+                    window.scroll(0, 0);
+                    // passed hardcoded value for visualization purpose
+                    handlerShowHp("Dr. Henry");
+                  }}
+                />
+              </Mui.Grid>
+            )}
+          </Mui.Grid>
+        )}
+        {isShowHpAppointment && !isNextAvailableAppointment && (
+          <Mui.Grid item xs={12} sx={styles.gridItem}>
+            <Common.CellmaButton
+              label={
+                isEnableBlockingMode
+                  ? t("disableBlockingMode")
+                  : t("enableBlockingMode")
+              }
+              tooltipTitle={
+                isEnableBlockingMode
+                  ? t("blockingModeEnable")
+                  : t("blockingModeDisable")
+              }
+              onClick={() => {
+                if (isEnableBlockingMode) {
+                  dispatch(setIsEnableBlockingMode(false));
+                } else {
+                  dispatch(setIsEnableBlockingMode(true));
+                }
+              }}
+            />
+          </Mui.Grid>
+        )}
+        {isShowHpAppointment &&
+          !isNextAvailableAppointment &&
+          !isUseSpecialtyAndRegionSetting && <HpTotalAppointmentCount />}
+      </Mui.Grid>
+    </form>
+  );
+};
+
+const styles = {
+  gridItem: {
+    display: "flex",
+    justifyContent: "flex-start",
+  },
+  appointmentTypography: {
+    color: "common.white",
+  },
+  typographyGrid: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  appointmentCountTypography: {
+    color: "primary.main",
+  },
+  slotButtonGrid: {
+    display: "flex",
+    justifyContent: "center",
+    marginY: "-8px",
+    marginX: "-3px",
+  },
+  scrollBar: {
+    maxHeight: 100,
+    minWidth: 50,
+    overflow: "auto",
+    scrollbarWidth: "thin",
+    "&::-webkit-scrollbar": {
+      width: "3px",
+    },
+    "&::-webkit-scrollbar-track": {
+      backgroundColor: "grey.100",
+    },
+    "&::-webkit-scrollbar-thumb": {
+      backgroundColor: "grey.400",
+    },
+  },
+};
+
+export default SelectDateAndHp;

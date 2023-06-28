@@ -1,0 +1,18 @@
+{
+  "menuDropDownFindPatient": "पेशंट शोधा",
+  "menuDropDownPatientSummary": "रुग्णाचा सारांश",
+  "menuDropDownAddReferral": "रेफरल जोडा",
+  "menuDropDownMyDetails": "माझे तपशील",
+  "menuDropDownMyTask": "माझे कार्य",
+  "menuDropDownMyAlerts": "माझे इशारे",
+  "menuDropDownMyTemplates": "माझे टेम्पलेट्स",
+  "menuDropDownMyPhysicalSigns": "माझी शारीरिक चिन्हे",
+  "menuDropDownMyAppointments": "माझ्या भेटी",
+  "menuDropDownWorklists": "कार्यसूची",
+  "menuDropDownCellmaVersion": "सेल्मा आवृत्ती",
+  "menuDropDownCellmaReactVersion": "फ्रंट एंड व्हर्जन:",
+  "menuDropDownCellmaApiVersion": "वेब सेवा आवृत्ती:",
+  "menuDropDownCellmaDatabaseVersion": "डेटाबेस आवृत्ती:",
+  "menuDropDownLogout": "बाहेर पडणे",
+  "menuDropDownCellmaUserVersion": "सेल्मा वापरकर्ता आवृत्ती"
+}

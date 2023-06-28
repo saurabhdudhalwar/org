@@ -1,0 +1,1 @@
+Add all your event data related logos files in this folder.

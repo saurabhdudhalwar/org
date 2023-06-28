@@ -1,0 +1,22 @@
+{
+  "English": {
+    "activeUser": "Current Active Users",
+    "maximumUsers": "Maximum Users",
+    "links": "Links",
+    "customizableView": "Customizable View",
+    "defaultView": "Default View",
+    "serviceDetails": "Service Details",
+    "refresh": "Refresh",
+    "addMpiUsers": "Add MPI Users"
+  },
+  "Marathi": {
+    "activeUser": "वर्तमान सक्रिय वापरकर्ते",
+    "maximumUsers": "जास्तीत जास्त वापरकर्ते",
+    "links": "दुवे",
+    "customizableView": "दृश्य सानुकूलित करा",
+    "defaultView": "डीफॉल्ट दृश्य",
+    "serviceDetails": "तपशील",
+    "refresh": "रिफ्रेश करा",
+    "addMpiUsers": "MPI वापरकर्ते"
+  }
+}
